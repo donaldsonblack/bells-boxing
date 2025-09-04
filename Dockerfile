@@ -19,7 +19,7 @@ EXPOSE 3000
 
 # install only prod deps in the runtime image
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci 
 
 # copy build artifacts and static assets
 COPY --from=builder /app/.next ./.next
