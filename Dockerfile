@@ -1,36 +1,31 @@
-FROM node:18-alpine as base
-RUN apk add --no-cache g++ make py3-pip libc6-compat
+# ---- deps ----
+FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
-EXPOSE 3000
+RUN npm ci
 
-FROM base as builder
+# ---- build ----
+FROM node:20-alpine AS builder
 WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-
-FROM base as production
+# ---- runtime ----
+FROM node:20-alpine AS runner
 WORKDIR /app
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000
+EXPOSE 3000
 
-ENV NODE_ENV=production
-RUN npm ci
+# install only prod deps in the runtime image
+COPY package*.json ./
+RUN npm ci --omit=dev
 
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
-USER nextjs
-
-
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
+# copy build artifacts and static assets
+COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 
-CMD npm start
+# drop privileges (node user exists in node image)
+USER node
 
-FROM base as dev
-ENV NODE_ENV=development
-RUN npm install 
-COPY . .
-CMD npm run build
-CMD npm run start
+CMD ["npm", "start"]
