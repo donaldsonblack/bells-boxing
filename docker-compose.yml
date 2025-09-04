@@ -5,8 +5,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    volumes:
-      - .:/app # For development: Mount current directory to container
-      - /app/node_modules # Exclude node_modules from host volume mount
-    environment:
-      - NODE_ENV=development # Set to 'production' for production
+    restart: unless-stopped
+    # No volumes in prod! (keeps the built .next inside the image)
+    # No NODE_ENV override here; it's set in the image to "production"
