@@ -1,45 +1,35 @@
-# Development Stage
-FROM node:18-alpine AS development
-
+FROM node:18-alpine as base
+RUN apk add --no-cache g++ make py3-pip libc6-compat
 WORKDIR /app
-
 COPY package*.json ./
-
-RUN npm ci
-
-COPY . .
-
 EXPOSE 3000
 
-
-CMD ["npm", "run", "dev"]
-
-# Builder Stage
-FROM node:18-alpine AS builder
-
+FROM base as builder
 WORKDIR /app
-
-COPY package*.json ./
-
-RUN npm ci
-
 COPY . .
-
 RUN npm run build
 
-# Production Stage 
 
-FROM node:18-alpine AS production
-
+FROM base as production
 WORKDIR /app
 
-# Copy the built artifacts from the builder stage
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-
-# Set the environment variables (if needed)
 ENV NODE_ENV=production
+RUN npm ci
 
-EXPOSE 3000
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nextjs -u 1001
+USER nextjs
 
-CMD ["node", "server.js"]
+
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/public ./public
+
+CMD npm start
+
+FROM base as dev
+ENV NODE_ENV=development
+RUN npm install 
+COPY . .
+CMD npm run dev
