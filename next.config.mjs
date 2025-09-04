@@ -1,8 +1,13 @@
-/** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',              // <- important
-  eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true },
+  output: 'standalone',
+  experimental: {
+    optimizePackageImports: [], // optional, unrelated
+  },
   images: { unoptimized: true },
+  // 👇 disables automatic font optimization/download
+  experimental: {
+    fontOptimize: false,
+  },
 };
+
 export default nextConfig;
