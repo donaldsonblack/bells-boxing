@@ -1,13 +1,12 @@
 services:
-  app:
+  nextjs-app:
     build:
       context: .
-      target: production
-    container_name: next-app
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    volumes:
+      - .:/app # For development: Mount current directory to container
+      - /app/node_modules # Exclude node_modules from host volume mount
     environment:
-      NODE_ENV: production
-      PORT: 3000
-      NEXT_TELEMETRY_DISABLED: "1" # optional
-    restart: unless-stopped
+      - NODE_ENV=development # Set to 'production' for production
