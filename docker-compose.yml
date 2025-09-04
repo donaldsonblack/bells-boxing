@@ -1,0 +1,13 @@
+services:
+  app:
+    build:
+      context: .
+      target: production
+    container_name: next-app
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_TELEMETRY_DISABLED: "1" # optional
+    restart: unless-stopped
